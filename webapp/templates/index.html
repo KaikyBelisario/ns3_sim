@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard IoT - Segurança Pública</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f4f6f9; }
+        h1, h2 { color: #1e3a8a; }
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        form { margin-bottom: 20px; }
+        label { font-weight: bold; margin-right: 10px; }
+        input[type="text"] { padding: 8px; margin-right: 20px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 8px 16px; background-color: #1e3a8a; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #3b82f6; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #1e3a8a; color: white; }
+        tr:nth-child(even) { background-color: #f9fafb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Painel de Controle IoT - Segurança Pública (NS-3)</h1>
+        <hr>
+        
+        <h2>Nova Simulação ao Vivo</h2>
+        <form action="/simular" method="POST">
+            <label>Delay do Gateway (ex: 20ms, 250ms):</label>
+            <input type="text" name="delay" value="20ms" required>
+            
+            <label>Largura de Banda (ex: 10Mbps, 3Mbps):</label>
+            <input type="text" name="banda" value="10Mbps" required>
+            
+            <button type="submit">Executar Simulação</button>
+        </form>
+
+        <h2>Histórico de Resultados Realizados</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Config: Delay</th>
+                    <th>Config: Banda</th>
+                    <th>Throughput</th>
+                    <th>Latência Média</th>
+                    <th>Jitter</th>
+                    <th>Perda de Pacotes (Packet Loss)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in historico %}
+                <tr>
+                    <td>{{ row[0] }}</td>
+                    <td><strong>{{ row[2] }}</strong></td>
+                    <td><strong>{{ row[3] }}</strong></td>
+                    <td>{{ row[4] }} Mbps</td>
+                    <td>{{ row[5] }} ms</td>
+                    <td>{{ row[6] }} ms</td>
+                    <td>{{ row[7] }} %</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
