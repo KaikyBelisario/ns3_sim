@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_rule
+from flask import Flask, render_template, request, redirect
 import sqlite3
 import subprocess
 

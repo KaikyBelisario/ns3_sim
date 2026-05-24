@@ -27,9 +27,9 @@ def init_db():
 def run_simulation(delay, banda):
     print(f"Executando NS-3 com Delay={delay} e Banda={banda}...")
     
-    # Executa o comando do NS-3 de dentro do diretório do simulador
+    # Executa o comando do NS-3 unificando as saídas de log e erro
     cmd = f"/opt/ns-3/ns3 run 'scratch/simulacao-seguranca --delayGateway={delay} --dataRateGateway={banda}'"
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd="/opt/ns-3")
+    result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd="/opt/ns-3")
     
     output = result.stdout
     print(output) # Log no terminal do docker
