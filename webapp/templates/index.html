@@ -50,13 +50,37 @@
             <tbody>
                 {% for row in historico %}
                 <tr>
-                    <td>{{ row[0] }}</td>
-                    <td><strong>{{ row[2] }}</strong></td>
-                    <td><strong>{{ row[3] }}</strong></td>
-                    <td>{{ row[4] }} Mbps</td>
-                    <td>{{ row[5] }} ms</td>
-                    <td>{{ row[6] }} ms</td>
-                    <td>{{ row[7] }} %</td>
+                    <td>{{ row['id'] }}</td>
+                    <td><strong>{{ row['delay_config'] }}</strong></td>
+                    <td><strong>{{ row['datarate_config'] }}</strong></td>
+
+                    <td>
+                        <strong>{{ row['t_geral']|round(2) }}</strong> Mbps<br>
+                        <span style="font-size: 0.85em; color: #555;">
+                            C1: {{ row['t_c1']|round(2) }} | C2: {{ row['t_c2']|round(2) }} | C3: {{ row['t_c3']|round(2) }}
+                        </span>
+                    </td>
+                    
+                    <td>
+                        <strong>{{ row['l_geral']|round(2) }}</strong> ms<br>
+                        <span style="font-size: 0.85em; color: #555;">
+                            C1: {{ row['l_c1']|round(2) }} | C2: {{ row['l_c2']|round(2) }} | C3: {{ row['l_c3']|round(2) }}
+                        </span>
+                    </td>
+                    
+                    <td>
+                        <strong>{{ row['j_geral']|round(2) }}</strong> ms<br>
+                        <span style="font-size: 0.85em; color: #555;">
+                            C1: {{ row['j_c1']|round(2) }} | C2: {{ row['j_c2']|round(2) }} | C3: {{ row['j_c3']|round(2) }}
+                        </span>
+                    </td>
+                    
+                    <td>
+                        <strong>{{ row['p_geral']|round(2) }}</strong> %<br>
+                        <span style="font-size: 0.85em; color: #555;">
+                            C1: {{ row['p_c1']|round(2) }} | C2: {{ row['p_c2']|round(2) }} | C3: {{ row['p_c3']|round(2) }}
+                        </span>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

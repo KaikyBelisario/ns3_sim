@@ -7,8 +7,9 @@ DB_PATH = "/workspace/ns3_seguranca.sqlite"
 
 def get_history():
     conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row # Permite acesso pelo nome da coluna!
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM simulacoes ORDER BY id DESC")
+    cursor.execute("SELECT * FROM simulacoes_v2 ORDER BY id DESC")
     rows = cursor.fetchall()
     conn.close()
     return rows

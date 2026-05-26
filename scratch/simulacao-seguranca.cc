@@ -131,68 +131,91 @@ int main (int argc, char *argv[])
     apps.Start (Seconds (2.0));
     apps.Stop (Seconds (10.0));
 
-    // 5. Monitor de Fluxo (FlowMonitor) - Extração das Métricas
+    // 5. Monitor de Fluxo (FlowMonitor)
     FlowMonitorHelper flowmon;
     Ptr<FlowMonitor> monitor = flowmon.InstallAll ();
 
     Simulator::Stop (Seconds (11.0));
     Simulator::Run ();
 
-    // Processamento dos resultados das métricas
+    // Estrutura para facilitar a coleta separada
+    struct Metricas {
+        double throughput = 0;
+        double delaySum = 0;
+        double jitterSum = 0;
+        uint64_t txPackets = 0;
+        uint64_t rxPackets = 0;
+        int rxFlows = 0;
+    };
+
+    Metricas geral, c1, c2, c3;
+    Ipv4Mask mask ("255.255.0.0");
+    Ipv4Address netC1 ("10.2.0.0");
+    Ipv4Address netC2 ("10.3.0.0");
+    Ipv4Address netC3 ("10.4.0.0");
+
     monitor->CheckForLostPackets ();
     Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier> (flowmon.GetClassifier ());
     std::map<FlowId, FlowMonitor::FlowStats> stats = monitor->GetFlowStats ();
 
-    double totalThroughput = 0;
-    double totalDelay = 0;
-    double totalJitter = 0;
-    uint64_t totalTxPackets = 0;
-    uint64_t totalRxPackets = 0;
-    int rxFlowsCount = 0;
-
-    std::cout << "\n================ METRICAS DA SIMULACAO ================\n";
     for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator i = stats.begin (); i != stats.end (); ++i)
     {
         Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow (i->first);
         
-        // Filtrar apenas fluxos que vão para o Servidor Central (Porta 9000)
+        // Filtrar fluxos que vão para o Servidor Central (Porta 9000)
         if (t.destinationPort == 9000)
         {
-            totalTxPackets += i->second.txPackets;
-            totalRxPackets += i->second.rxPackets;
+            Metricas* m = nullptr;
+            if (t.sourceAddress.CombineMask(mask) == netC1) m = &c1;
+            else if (t.sourceAddress.CombineMask(mask) == netC2) m = &c2;
+            else if (t.sourceAddress.CombineMask(mask) == netC3) m = &c3;
+
+            geral.txPackets += i->second.txPackets;
+            if (m) m->txPackets += i->second.txPackets;
+
+            geral.rxPackets += i->second.rxPackets;
+            if (m) m->rxPackets += i->second.rxPackets;
             
             if (i->second.rxPackets > 0)
             {
-                rxFlowsCount++;
-                // Throughput em Mbps
-                double throughput = (i->second.rxBytes * 8.0) / (i->second.timeLastRxPacket.GetSeconds() - i->second.timeFirstRxPacket.GetSeconds()) / 1024 / 1024;
-                totalThroughput += throughput;
-                
-                // Latência / Delay Médio em milissegundos
-                totalDelay += (i->second.delaySum.GetSeconds() / i->second.rxPackets) * 1000;
-                
-                // Jitter Médio em milissegundos
-                totalJitter += (i->second.jitterSum.GetSeconds() / (i->second.rxPackets - 1)) * 1000;
+                geral.rxFlows++;
+                if (m) m->rxFlows++;
+
+                double tput = (i->second.rxBytes * 8.0) / (i->second.timeLastRxPacket.GetSeconds() - i->second.timeFirstRxPacket.GetSeconds()) / 1024 / 1024;
+                double delay = (i->second.delaySum.GetSeconds() / i->second.rxPackets) * 1000;
+                double jitter = (i->second.jitterSum.GetSeconds() / (i->second.rxPackets - 1)) * 1000;
+
+                geral.throughput += tput;
+                geral.delaySum += delay;
+                geral.jitterSum += jitter;
+
+                if (m) {
+                    m->throughput += tput;
+                    m->delaySum += delay;
+                    m->jitterSum += jitter;
+                }
             }
         }
     }
 
-    // Exibição Consolidada dos Resultados
-    if (rxFlowsCount > 0)
-    {
-        double packetLoss = ((double)(totalTxPackets - totalRxPackets) / totalTxPackets) * 100;
+    // Função lambda para imprimir formatado e facilitar a extração no Python
+    auto printMetricas = [](std::string nome, Metricas m) {
+        double packetLoss = m.txPackets > 0 ? ((double)(m.txPackets - m.rxPackets) / m.txPackets) * 100 : 0;
+        double delay = m.rxFlows > 0 ? m.delaySum / m.rxFlows : 0;
+        double jitter = m.rxFlows > 0 ? m.jitterSum / m.rxFlows : 0;
         
-        std::cout << "Throughput Médio da Rede: " << totalThroughput << " Mbps\n";
-        std::cout << "Latencia (Delay) Media  : " << (totalDelay / rxFlowsCount) << " ms\n";
-        std::cout << "Jitter Medio            : " << (totalJitter / rxFlowsCount) << " ms\n";
-        std::cout << "Packet Loss (Perda)     : " << packetLoss << " %\n";
-        std::cout << "Pacotes Enviados        : " << totalTxPackets << "\n";
-        std::cout << "Pacotes Recebidos       : " << totalRxPackets << "\n";
-    }
-    else
-    {
-        std::cout << "Nenhum pacote foi recebido pelo servidor central.\n";
-    }
+        std::cout << "[" << nome << "] "
+                  << "Tput: " << m.throughput << " Mbps | "
+                  << "Delay: " << delay << " ms | "
+                  << "Jitter: " << jitter << " ms | "
+                  << "Loss: " << packetLoss << " %\n";
+    };
+
+    std::cout << "\n================ METRICAS DA SIMULACAO ================\n";
+    printMetricas("Geral", geral);
+    printMetricas("C1-Cameras", c1);
+    printMetricas("C2-Sensores", c2);
+    printMetricas("C3-Bodycams", c3);
     std::cout << "=======================================================\n\n";
 
     Simulator::Destroy ();
