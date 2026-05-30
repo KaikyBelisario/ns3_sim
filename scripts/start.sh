@@ -7,5 +7,9 @@ cp /workspace/scratch/* /opt/ns-3/scratch/
 # Executa uma simulação padrão na primeira vez
 python3 /workspace/scripts/run_sim_and_store.py 20ms 10Mbps
 
+# Inicia o ambiente SDN/NFV (OVS + Ryu + Mininet + VNFs)
+echo "Iniciando ambiente SDN/NFV..."
+bash /workspace/sdn/start_sdn.sh || echo "[AVISO] Erro no start_sdn.sh (continuando...)"
+
 # Inicia o servidor Flask
 python3 /workspace/webapp/app.py

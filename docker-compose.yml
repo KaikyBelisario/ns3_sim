@@ -2,9 +2,11 @@ services:
   ns3-seguranca-web:
     build: .
     container_name: ns3-seguranca-dashboard
+    privileged: true
     ports:
       - "5000:5000"
     volumes:
       - ./scratch:/workspace/scratch
       - ./scripts:/workspace/scripts
       - ./webapp:/workspace/webapp
+      - ./sdn:/workspace/sdn
